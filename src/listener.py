@@ -2,9 +2,8 @@ from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 import json
 import events
 import threading
+import config
 from irc import IrcConnection
-
-HOST, PORT = '', 8888
 
 irc = None
 
@@ -38,13 +37,15 @@ class MyHandler(BaseHTTPRequestHandler):
 def worker():
     irc.loop()
 
-irc = IrcConnection(server='chat.freenode.net', channel='#wfbottest', nick='wftestbot', port=6667)
+irc = IrcConnection(server=config.IRC_SERVER, channel=config.IRC_CHANNEL, \
+        nick=config.IRC_NICK, port=config.IRC_PORT)
+
 t = threading.Thread(target=worker)
 t.start()
 
 # Run Github webhook handling server
 try:
-    server = HTTPServer((HOST, PORT), MyHandler)
+    server = HTTPServer((config.SERVER_HOST, config.SERVER_PORT), MyHandler)
     server.serve_forever()
 except KeyboardInterrupt:
     print "Exiting"
