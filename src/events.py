@@ -14,26 +14,32 @@ def short_gh_link(link):
 MAX_COMMIT_LOG_LEN = 5
 MAX_COMMIT_LEN = 70
 
+def fmt_commit(cmt):
+    hsh = irccolors.colorize(cmt['id'][:10], 'teal')
+    author = irccolors.colorize(cmt['author']['name'], 'bold-green')
+    message = cmt['message']
+    message = message[:MAX_COMMIT_LEN] \
+            + ('..' if len(message) > MAX_COMMIT_LEN else '')
+
+    return '{} {}: {}'.format(hsh, author, message)
+
 def fmt_last_commits(data):
-    # extract data
-    commits = map(lambda x: (x['id'][:10], x['author']['name'], x['message']), data['commits'])
-    # Merge them into one colored string
-    commits = map(lambda (hsh, name, message): \
-            irccolors.colorize(hsh, 'teal') \
-            + ' ' + irccolors.colorize(name, 'bold-green') + ': ' \
-            + message[:MAX_COMMIT_LEN] \
-            + ('..' if len(message) > MAX_COMMIT_LEN else ''), \
-            commits)
+    commits = list(map(fmt_commit, data['commits']))
 
     # make sure the commit list isn't too long
     if len(commits) <= MAX_COMMIT_LOG_LEN:
         return commits
     else:
-        ellipsized = str(len(commits) - MAX_COMMIT_LOG_LEN + 1) + ' more'
+        ellipsized_num = len(commits) - MAX_COMMIT_LOG_LEN + 1
+        ellipsized = str(ellipsized_num) + ' more'
         last_shown = MAX_COMMIT_LOG_LEN - 1
 
-        return commits[slice(0, last_shown)] + \
-                ['... and ' + irccolors.colorize(ellipsized, 'royal') + ' commits']
+        last_line = '... and {} commit' \
+            .format(irccolors.colorize(ellipsized, 'royal'))
+        if ellipsized_num > 1: # add s to commitS
+            last_line += 's'
+
+        return commits[slice(0, last_shown)] + [last_line]
 
 def handle_force_push(irc, data):
     author = irccolors.colorize(data['pusher']['name'], 'bold')
@@ -51,15 +57,13 @@ def handle_force_push(irc, data):
     for commit in commits:
         irc.schedule_message(commit)
 
-    print "Force push event"
+    print("Force push event")
 
 def handle_forward_push(irc, data):
     author = irccolors.colorize(data['pusher']['name'], 'bold')
 
     num_commits = len(data['commits'])
-    num_commits = str(num_commits) + " commit"
-    if num_commits > 1:
-        num_commits += 's' # make it "commits"
+    num_commits = str(num_commits) + " commit" + ('s' if num_commits > 1 else '')
 
     num_commits = irccolors.colorize(num_commits, 'bold-teal')
 
@@ -73,7 +77,7 @@ def handle_forward_push(irc, data):
     for commit in commits:
         irc.schedule_message(commit)
 
-    print "Push event"
+    print("Push event")
 
 def handle_push_event(irc, data):
     if data['forced']:
@@ -82,7 +86,7 @@ def handle_push_event(irc, data):
         handle_forward_push(irc, data)
 
 def handle_ping_event(irc, data):
-    print "Ping event"
+    print("Ping event")
 
 def handle_event(irc, event, data):
     if event == 'ping':
@@ -90,4 +94,4 @@ def handle_event(irc, event, data):
     elif event == 'push':
         handle_push_event(irc, data)
     else:
-        print "Unknown event type: " + event
+        print("Unknown event type: " + event)
