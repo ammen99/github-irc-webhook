@@ -5,5 +5,5 @@ SERVER_PORT = 8888
 # Attributes of the IRC connection
 IRC_SERVER = 'chat.freenode.net'
 IRC_CHANNEL = '#wfbottest'
-IRC_NICK = 'WfNotifyBot'
+IRC_NICK = 'WfTestBot'
 IRC_PORT = 6667
