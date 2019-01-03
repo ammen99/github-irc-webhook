@@ -85,6 +85,30 @@ def handle_push_event(irc, data):
     else:
         handle_forward_push(irc, data)
 
+def fmt_pr_action(action, merged):
+    if action == 'opened' or action == 'reopened':
+        action = irccolors.colorize(action, 'green')
+    elif action == 'closed':
+        if merged:
+            action = irccolors.colorize('merged', 'purple')
+        else:
+            action = irccolors.colorize(action, 'red')
+    else:
+        action = irccolors.colorize(action, 'brown')
+
+    return action
+
+def handle_pull_request(irc, data):
+    repo = fmt_repo(data)
+    author = irccolors.colorize(data['pull_request']['user']['login'], 'bold')
+    action = fmt_pr_action(data['action'], data['pull_request']['merged'])
+    pr_num = irccolors.colorize('#' + str(data['number']), 'bold-blue')
+    title = data['pull_request']['title']
+    link = short_gh_link(data['pull_request']['url'])
+
+    irc.schedule_message('{} {} {} pull request {}: {} ({})'
+            .format(repo, author, action, pr_num, title, link))
+
 def handle_ping_event(irc, data):
     print("Ping event")
 
@@ -93,5 +117,7 @@ def handle_event(irc, event, data):
         handle_ping_event(irc, data)
     elif event == 'push':
         handle_push_event(irc, data)
+    elif event == 'pull_request':
+        handle_pull_request(irc, data)
     else:
         print("Unknown event type: " + event)
