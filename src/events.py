@@ -104,7 +104,7 @@ def handle_pull_request(irc, data):
     action = fmt_pr_action(data['action'], data['pull_request']['merged'])
     pr_num = irccolors.colorize('#' + str(data['number']), 'bold-blue')
     title = data['pull_request']['title']
-    link = short_gh_link(data['pull_request']['url'])
+    link = short_gh_link(data['pull_request']['html_url'])
 
     irc.schedule_message('{} {} {} pull request {}: {} ({})'
             .format(repo, author, action, pr_num, title, link))
