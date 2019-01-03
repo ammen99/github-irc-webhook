@@ -100,7 +100,7 @@ def fmt_pr_action(action, merged):
 
 def handle_pull_request(irc, data):
     repo = fmt_repo(data)
-    author = irccolors.colorize(data['pull_request']['user']['login'], 'bold')
+    author = irccolors.colorize(data['sender']['login'], 'bold')
     action = fmt_pr_action(data['action'], data['pull_request']['merged'])
     pr_num = irccolors.colorize('#' + str(data['number']), 'bold-blue')
     title = data['pull_request']['title']
