@@ -109,6 +109,25 @@ def handle_pull_request(irc, data):
     irc.schedule_message('{} {} {} pull request {}: {} ({})'
             .format(repo, author, action, pr_num, title, link))
 
+
+def handle_issue(irc, data):
+    repo = fmt_repo(data)
+    user = irccolors.colorize(data['sender']['login'], 'bold')
+
+    action = data['action']
+    if not action in ['opened', 'closed']:
+        return
+    action_color = 'red' if action == 'opened' else 'green'
+    action = irccolors.colorize(action, action_color)
+
+    issue_num = irccolors.colorize('#' + str(data['issue']['number']), 'bold-blue')
+    title = data['issue']['title']
+    link = short_gh_link(data['issue']['html_url'])
+
+    irc.schedule_message('{} {} {} issue {}: {} ({})'
+            .format(repo, user, action, issue_num, title, link))
+
+
 def handle_ping_event(irc, data):
     print("Ping event")
 
@@ -119,5 +138,7 @@ def handle_event(irc, event, data):
         handle_push_event(irc, data)
     elif event == 'pull_request':
         handle_pull_request(irc, data)
+    elif event == 'issues':
+        handle_issue(irc, data)
     else:
         print("Unknown event type: " + event)
