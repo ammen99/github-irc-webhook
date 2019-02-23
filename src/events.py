@@ -79,9 +79,21 @@ def handle_forward_push(irc, data):
 
     print("Push event")
 
+def handle_delete_branch(irc, data):
+    author = irccolors.colorize(data['pusher']['name'], 'bold')
+    action = irccolors.colorize('deleted', 'red')
+
+    branch = data['ref'].split('/')[-1]
+    branch = irccolors.colorize(branch, 'bold-blue')
+
+    irc.schedule_message("{} {} {} {}"
+            .format(fmt_repo(data), author, action, branch))
+
 def handle_push_event(irc, data):
     if data['forced']:
         handle_force_push(irc, data)
+    elif data['deleted']:
+        handle_delete_branch(irc, data)
     else:
         handle_forward_push(irc, data)
 
