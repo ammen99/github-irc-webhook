@@ -44,7 +44,7 @@ def worker():
     irc.loop()
 
 irc = IrcConnection(server=config.IRC_SERVER, channel=config.IRC_CHANNEL, \
-        nick=config.IRC_NICK, port=config.IRC_PORT)
+        nick=config.IRC_NICK, passw=config.IRC_PASS, port=config.IRC_PORT)
 
 t = threading.Thread(target=worker)
 t.start()

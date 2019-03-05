@@ -23,10 +23,11 @@ def colorize(line, color):
     return '\033[' + ansi_colors[color] + line + '\033[0m'
 
 class IrcConnection:
-    def __init__(self, server, channel, nick, port):
+    def __init__(self, server, channel, nick, passw, port):
         self.server = server
         self.channel = channel
         self.nick = nick
+        self.passw = passw
         self.port = port
 
         self.connection = None
@@ -54,8 +55,12 @@ class IrcConnection:
         self.last_ping = time.time()
         self.process_input()
 
+        if len(self.passw) > 0:
+            self.post_string('PASS {}\n'.format(self.passw));
+
         self.post_string('NICK {}\n'.format(self.nick))
         self.post_string('USER {} {} {} :GH notifications\n'.format(self.nick, self.nick, self.nick))
+
         self.post_string('JOIN {}\n'.format(self.channel))
         self.send_message(irccolors.colorize('IRC bot initialized successfully', 'green'))
 
