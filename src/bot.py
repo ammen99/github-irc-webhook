@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler,HTTPServer
 import json
 import events
+import sys
 import threading
 import config
 from irc import IrcConnection
@@ -27,6 +28,8 @@ class MyHandler(BaseHTTPRequestHandler):
         event_type = self.headers['x-github-event']
 
         data = self.rfile.read(content_len)
+        if sys.version_info < (3, 6):
+            data = data.decode()
 
         self.send_response(200)
         self.send_header('content-type', 'text/html')
