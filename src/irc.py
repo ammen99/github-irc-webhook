@@ -32,8 +32,8 @@ class IrcConnection:
 
         self.connection = None
         self.buffer = ""
-        self.last_ping = 0
-        self.ping_pending = False
+        self.last_pong = 0
+        self.await_pong = False
 
         self.queue = []
         self.lock = threading.Lock()
@@ -52,7 +52,8 @@ class IrcConnection:
                 self.connection = None
                 time.sleep(RETRY_INTERVAL)
 
-        self.last_ping = time.time()
+        self.last_pong = time.time()
+        self.await_pong = False
         self.process_input()
 
         if len(self.passw) > 0:
@@ -72,7 +73,7 @@ class IrcConnection:
 
     def try_ping(self):
         self.post_string('PING {}\n'.format(self.server))
-        self.ping_pending = True
+        self.await_pong = True
 
     def schedule_message(self, message):
         self.lock.acquire()
@@ -86,8 +87,8 @@ class IrcConnection:
             self.post_string('PONG ' + line.split()[1] + '\n')
 
         if line.find('PONG') != -1:
-            self.last_ping = time.time()
-            self.ping_pending = False
+            self.last_pong = time.time()
+            self.await_pong = False
 
         if len(line) > 0:
             print('{}: {}'.format(colorize(self.server, 'green'), line))
@@ -110,7 +111,7 @@ class IrcConnection:
             self.process_line(line)
 
         # Next time append to the last line which is still incomplete
-        self.buffer = self.buffer[-1]
+        self.buffer = lines[-1]
 
     def post_string(self, message):
         print(colorize(self.nick + '> ' + message[:-1], 'blue'))
@@ -133,11 +134,11 @@ class IrcConnection:
                 continue
 
             # make sure connection doesn't get dropped
-            if self.last_ping + PING_INTERVAL < time.time() and not self.ping_pending:
+            if self.last_pong + PING_INTERVAL < time.time() and not self.await_pong:
                 self.try_ping()
 
-            # it was too much time since last ping, assume a broken connection
-            if self.last_ping + PING_TIMEOUT < time.time():
+            # it was too much time since last pong, assume a broken connection
+            if self.last_pong + PING_TIMEOUT < time.time() and self.await_pong:
                 self.reconnect()
                 continue
 
