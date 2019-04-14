@@ -93,6 +93,16 @@ def handle_delete_branch(irc, data):
     irc.schedule_message("{} {} {} {}"
             .format(fmt_repo(data), author, action, branch))
 
+def handle_create_branch(irc, data):
+    author = irccolors.colorize(data['pusher']['name'], 'bold')
+    action = irccolors.colorize('created', 'green')
+
+    branch = get_branch_name_from_push_event(data)
+    branch = irccolors.colorize(branch, 'bold-blue')
+
+    irc.schedule_message("{} {} {} {}"
+            .format(fmt_repo(data), author, action, branch))
+
 def handle_push_event(irc, data):
     if config.GH_PUSH_ENABLED_BRANCHES:
         branch = get_branch_name_from_push_event(data)
@@ -106,6 +116,8 @@ def handle_push_event(irc, data):
         handle_force_push(irc, data)
     elif data['deleted'] and 'delete' in config.GH_PUSH_ENABLED_EVENTS:
         handle_delete_branch(irc, data)
+    elif data['created'] and 'create' in config.GH_PUSH_ENABLED_EVENTS:
+        handle_created_branch(irc, data)
     elif 'push' in config.GH_PUSH_ENABLED_EVENTS:
         handle_forward_push(irc, data)
 

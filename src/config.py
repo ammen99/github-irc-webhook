@@ -18,7 +18,7 @@ IRC_PORT = 6667
 GH_PUSH_ENABLED_BRANCHES = [] # for example, ['master', 'testing', 'author/repo:branch']
 
 # a list of push-related events the bot should post notifications for
-GH_PUSH_ENABLED_EVENTS = ['push', 'force-push', 'delete'] # no others supported for now
+GH_PUSH_ENABLED_EVENTS = ['push', 'force-push', 'delete', 'create'] # no others supported for now
 
 # a list of PR-related events the bot should post notifications for
 # notice 'merged' is just a special case of 'closed'
