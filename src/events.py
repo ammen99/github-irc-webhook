@@ -117,7 +117,7 @@ def handle_push_event(irc, data):
     elif data['deleted'] and 'delete' in config.GH_PUSH_ENABLED_EVENTS:
         handle_delete_branch(irc, data)
     elif data['created'] and 'create' in config.GH_PUSH_ENABLED_EVENTS:
-        handle_created_branch(irc, data)
+        handle_create_branch(irc, data)
     elif 'push' in config.GH_PUSH_ENABLED_EVENTS:
         handle_forward_push(irc, data)
 
