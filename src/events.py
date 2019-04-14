@@ -83,27 +83,29 @@ def handle_forward_push(irc, data):
 
     print("Push event")
 
-def handle_delete_branch(irc, data):
+# Created or deleted
+def handle_branch_change(irc, data, action_name):
+    if not action_name in config.GH_PUSH_ENABLED_EVENTS:
+        return
+
     author = irccolors.colorize(data['pusher']['name'], 'bold')
-    action = irccolors.colorize('deleted', 'red')
+    action = ""
+    if action_name == 'create':
+        action = irccolors.colorize(action_name + 'd', 'green')
+    else:
+        action = irccolors.colorize(action_name + 'd', 'red')
 
     branch = get_branch_name_from_push_event(data)
     branch = irccolors.colorize(branch, 'bold-blue')
 
-    irc.schedule_message("{} {} {} {}"
-            .format(fmt_repo(data), author, action, branch))
-
-def handle_create_branch(irc, data):
-    author = irccolors.colorize(data['pusher']['name'], 'bold')
-    action = irccolors.colorize('created', 'green')
-
-    branch = get_branch_name_from_push_event(data)
-    branch = irccolors.colorize(branch, 'bold-blue')
-
-    irc.schedule_message("{} {} {} {}"
-            .format(fmt_repo(data), author, action, branch))
+    irc.schedule_message("{} {} {} {} {}"
+            .format(fmt_repo(data), author, action, data['ref_type'], branch))
 
 def handle_push_event(irc, data):
+    # created and deleted are handled separately in the create or delete events
+    if data['created'] or data['deleted']:
+        return
+
     if config.GH_PUSH_ENABLED_BRANCHES:
         branch = get_branch_name_from_push_event(data)
         repo = data['repository']['full_name']
@@ -114,10 +116,6 @@ def handle_push_event(irc, data):
 
     if data['forced'] and 'force-push' in config.GH_PUSH_ENABLED_EVENTS:
         handle_force_push(irc, data)
-    elif data['deleted'] and 'delete' in config.GH_PUSH_ENABLED_EVENTS:
-        handle_delete_branch(irc, data)
-    elif data['created'] and 'create' in config.GH_PUSH_ENABLED_EVENTS:
-        handle_create_branch(irc, data)
     elif 'push' in config.GH_PUSH_ENABLED_EVENTS:
         handle_forward_push(irc, data)
 
@@ -179,5 +177,9 @@ def handle_event(irc, event, data):
         handle_pull_request(irc, data)
     elif event == 'issues':
         handle_issue(irc, data)
+    elif event == "create":
+        handle_branch_change(irc, data, event)
+    elif event == "delete":
+        handle_branch_change(irc, data, event)
     else:
         print("Unknown event type: " + event)
