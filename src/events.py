@@ -88,7 +88,7 @@ def handle_branch_change(irc, data, action_name):
     if not action_name in config.GH_PUSH_ENABLED_EVENTS:
         return
 
-    author = irccolors.colorize(data['pusher']['name'], 'bold')
+    author = irccolors.colorize(data['sender']['name'], 'bold')
     action = ""
     if action_name == 'create':
         action = irccolors.colorize(action_name + 'd', 'green')
