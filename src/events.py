@@ -1,6 +1,7 @@
 import irccolors
 import subprocess
 import requests
+import config
 
 def fmt_repo(data):
     repo = '[' + data['repository']['full_name'] + ']'
@@ -41,13 +42,16 @@ def fmt_last_commits(data):
 
         return commits[slice(0, last_shown)] + [last_line]
 
+def get_branch_name_from_push_event(data):
+    return data['ref'].split('/')[-1]
+
 def handle_force_push(irc, data):
     author = irccolors.colorize(data['pusher']['name'], 'bold')
 
     before = irccolors.colorize(data['before'][:10], 'bold-red')
     after = irccolors.colorize(data['after'][:10], 'bold-red')
 
-    branch = data['ref'].split('/')[-1]
+    branch = get_branch_name_from_push_event(data)
     branch = irccolors.colorize(branch, 'bold-blue')
 
     irc.schedule_message("{} {} force-pushed {} from {} to {} ({}):"
@@ -67,7 +71,7 @@ def handle_forward_push(irc, data):
 
     num_commits = irccolors.colorize(num_commits, 'bold-teal')
 
-    branch = data['ref'].split('/')[-1]
+    branch = get_branch_name_from_push_event(data)
     branch = irccolors.colorize(branch, 'bold-blue')
 
     irc.schedule_message("{} {} pushed {} to {} ({}):"
@@ -83,18 +87,26 @@ def handle_delete_branch(irc, data):
     author = irccolors.colorize(data['pusher']['name'], 'bold')
     action = irccolors.colorize('deleted', 'red')
 
-    branch = data['ref'].split('/')[-1]
+    branch = get_branch_name_from_push_event(data)
     branch = irccolors.colorize(branch, 'bold-blue')
 
     irc.schedule_message("{} {} {} {}"
             .format(fmt_repo(data), author, action, branch))
 
 def handle_push_event(irc, data):
-    if data['forced']:
+    if config.GH_PUSH_ENABLED_BRANCHES:
+        branch = get_branch_name_from_push_event(data)
+        repo = data['repository']['full_name']
+        repobranch = repo + ':' + branch
+        if not branch in config.GH_PUSH_ENABLED_BRANCHES:
+            if not repobranch in config.GH_PUSH_ENABLED_BRANCHES:
+                return
+
+    if data['forced'] and 'force-push' in config.GH_PUSH_ENABLED_EVENTS:
         handle_force_push(irc, data)
-    elif data['deleted']:
+    elif data['deleted'] and 'delete' in config.GH_PUSH_ENABLED_EVENTS:
         handle_delete_branch(irc, data)
-    else:
+    elif 'push' in config.GH_PUSH_ENABLED_EVENTS:
         handle_forward_push(irc, data)
 
 def fmt_pr_action(action, merged):
@@ -113,6 +125,9 @@ def fmt_pr_action(action, merged):
 def handle_pull_request(irc, data):
     repo = fmt_repo(data)
     author = irccolors.colorize(data['sender']['login'], 'bold')
+    if not data['action'] in config.GH_PR_ENABLED_EVENTS:
+        return
+
     action = fmt_pr_action(data['action'], data['pull_request']['merged'])
     pr_num = irccolors.colorize('#' + str(data['number']), 'bold-blue')
     title = data['pull_request']['title']
