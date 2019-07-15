@@ -27,6 +27,10 @@ class MyHandler(BaseHTTPRequestHandler):
         content_len = int(self.headers['content-length'])
         event_type = self.headers['x-github-event']
 
+        if content_type != "application/json":
+            self.send_error(400, "Bad Request", "Expected a JSON request")
+            return
+
         data = self.rfile.read(content_len)
         if sys.version_info < (3, 6):
             data = data.decode()
